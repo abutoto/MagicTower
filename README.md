@@ -1,0 +1,49 @@
+# 模块划分
+- 窗体
+    - Surface
+        - set
+        - new
+        - add
+        - father
+        - width,hight
+        - left,top
+        - priority
+        - bgcolor
+    - Rect
+        - set
+        - new
+        - add
+        - father
+        - (x,y),(x,y)
+        - color
+        - size
+    - 文字
+        - father
+        - left,top
+        - font
+        - color
+        - size
+- 地图
+    - 楼层
+    - 更新
+- 玩家
+    - 自身的属性
+    - 当前位置、朝向
+    - 移动
+    - 触发事件
+    - 展示自己
+    - 战斗
+- 交互界面
+    - UI
+    - 显示位置
+    - 是否显示
+    - 是否锁定
+    - 事件处理
+    - 更新
+- 游戏数据
+    - 初始化配置
+    - 保存数据
+    - 读取数据
+- 读取数据
+    - 文本
+    - json

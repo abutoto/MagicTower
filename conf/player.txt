@@ -1,0 +1,12 @@
+pos_x = 9
+pos_y = 5
+face = 1
+grade = 1
+hp = 1000
+attack = 10
+defense = 10
+gold = 0
+experience = 0
+yellow = 0
+blue = 1
+red = 1
