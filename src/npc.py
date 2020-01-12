@@ -1,33 +1,26 @@
 '''
-Created on 20200101
-@author zs
+Created on 20200111
+@author abutoto
 '''
 
 import os
 import sys
-import pygame
+import pygame as pg
 
-from loader import read_file
+from src.UI.menu import *
 
-class NPC():
-    def __init__(self):
-        print("NPC")
-
-    def meet(self, npc_id, screen, play, disp):
-        print(npc_id)
-        offset = (0, 0)
-        if npc_id == 105:  # 序章中的仙子
-            play.yellow += 1
-            disp.dialogue = ["勇士:\n  快走吧，我还要去救被关在这里的公主。"]
-            disp.dialogue_pos = 330, 300
-            offset = (0, -1)
-        elif npc_id >= 106 and npc_id <= 108:  # 商店
-            pass
-        elif npc_id == 109:  # 经验老人
-            pass
-        elif npc_id == 110:  # 小偷
-            pass
-        elif npc_id == 111:  # 公主
-            pass
-        
-        return offset
+def get_shop(npc_id, floor):
+    shop_image = global_dict.get("image_dict")[0][113]
+    info_list = ["增加 {} 点生命", "增加 {} 点攻击", "增加 {} 点防御", "离开商店"]
+    goods_type = ["hp", "attack", "defense"]
+    goods_addition = [800, 4, 4, ""]
+    cost_type = "gold"
+    cost = (25, 25, 25, 0)
+    if floor == 11:
+        goods_addition = [5000, 20, 20, ""]
+        cost = (100, 100, 100, 0)
+    title = "  想要增加你的能力吗？\n如果你有 {} 金币，你\n可以任意选择一项：".format(cost[0])
+    shop = Shop(shop_image=shop_image, title=title, goods_type=goods_type,
+                goods_addition=goods_addition, info_list=info_list, cost_type=cost_type, cost=cost)
+    
+    return shop

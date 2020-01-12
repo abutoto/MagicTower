@@ -8,6 +8,9 @@ import sys
 import pygame as pg
 import pygame.freetype as ft
 
+from conf.sysconf import *
+
+
 class Form():
     def __init__(self, **kwargs):
         self.surface = kwargs.get("surface", None)
@@ -17,6 +20,8 @@ class Form():
         self.left = kwargs.get("left", 0)
         self.top = kwargs.get("top", 0)
         self.priority = kwargs.get("priority", 0)
+        ft.init()
+        self.font = ft.Font(FONT_NAME, size=36)
 
     def set(self, surface):
         self.surface = surface
@@ -30,13 +35,18 @@ class Form():
         self.children.append(form)
         self.children.sort(key=lambda x: x.priority)
 
+    def remove_child(self, priority):
+        self.children = list(
+            filter(lambda x: x.priority != priority, self.children))
+
     def create_rect(self, p1, p2, color, size):
-        pg.draw.rect(self.surface, color, (p1[0],p1[1],p2[0]-p1[0],p2[1]-p1[1]), size)
+        pg.draw.rect(self.surface, color,
+                     (p1[0], p1[1], p2[0]-p1[0], p2[1]-p1[1]), size)
 
     def flush(self):
         for form in self.children:
             form.flush()
-            self.surface.blit(form.surface, (form.left,form.top))
+            self.surface.blit(form.surface, (form.left, form.top))
 
     def move(self, pos):
         self.left = pos[0]
@@ -46,33 +56,36 @@ class Form():
         self.surface = pg.Surface(size)
         self.rect.w = size[0]
         self.rect.h = size[1]
-        
+
     def fill(self, color):
         self.surface.fill(color)
 
-    def fill_surface(self, surface, mode="scale", fill_rect=None):
-        rect = surface.get_rect()
-        if fill_rect:
-            rect.left = fill_rect.left
-            rect.top = fill_rect.top
-        else:
-            fill_rect = self.rect
-            rect.left = 0
-            rect.top = 0
-
+    def fill_surface(self, surface, mode="scale", p1=(0, 0), p2=(0, 0)):
         if mode == "scale":
-            self.surface.blit(pg.transform.scale(surface, (fill_rect.w,fill_rect.h)), rect)
+            self.surface.blit(pg.transform.scale(
+                surface, (p2[0]-p1[0], p2[1]-p1[1])), p1)
         elif mode == "repeat":
-            left_pos = rect.left
-            while rect.bottom <= fill_rect.bottom:
-                while rect.right <= fill_rect.right:
-                    self.surface.blit(surface, rect)
-                    rect.left += rect.w
-                rect.left = left_pos
-                rect.top += rect.h
+            w, h = surface.get_rect().size
+            left, top = p1
+            while top+h <= p2[0]:
+                while left+w <= p2[1]:
+                    self.surface.blit(surface, (left, top))
+                    left += w
+                left = p1[0]
+                top += h
         elif mode == "norepeat":
-            self.surface.blit(surface, rect)
+            self.surface.blit(surface, p1)
 
-    def fill_text(self, font, color, text, size=30, fill_rect=(0,0)):
-        font.render_to(self.surface, fill_rect, str(text), fgcolor=color, size=size)
-        
+    def fill_text(self, color, text, size=30, mode="left", fill_rect=(0, 0), width=0):
+        surf, rect = self.font.render(str(text), fgcolor=color, size=size)
+        rect.top = fill_rect[1]
+        if mode == "left":
+            rect.left = fill_rect[0]
+        elif mode == "center":
+            rect.left = fill_rect[0] + (width - rect.w) / 2
+        elif mode == "right":
+            rect.left = fill_rect[0] + width - rect.w
+        else:
+            rect.left = fill_rect[0]
+
+        self.fill_surface(surf, mode="norepeat", p1=rect)

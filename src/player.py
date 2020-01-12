@@ -27,37 +27,63 @@ class Player():
         self.yellow = PLAY_YELLOW
         self.blue = PLAY_BLUE
         self.red = PLAY_RED
+        self.prop_dict = dict()
 
         print("Player")
 
     def try_fight(self, monster):
-        h1 = self.attack - monster["defense"]
-        h2 = monster["attack"] - self.defense
-        if h1 <= 0:
+        heart = self.get_heart(monster)
+        if heart == "???":
             return False
-        round = math.ceil((monster["hp"] - h1) / h1)
-        if round * h2 >= self.hp:
-            return False
-        self.hp -= round * h2
+        self.hp -= heart
         self.experience += monster["experience"]
         self.gold += monster["gold"]
         return True
 
+    def get_heart(self, monster):
+        h1 = self.attack - monster["defense"]
+        h2 = monster["attack"] - self.defense
+        if h1 <= 0:
+            return "???"
+        round = math.ceil((monster["hp"] - h1) / h1)
+
+        if round * h2 >= self.hp:
+            return "???"
+        else:
+            return round * h2
+
     def get_status(self):
-        pos_list = [(150, 70), (140, 120), (140, 155), (140, 190),
-                    (140, 225), (140, 260), (140, 320), (140, 365), (140, 410)]
-        ftsize_list = [40, 25, 25, 25, 25, 25, 25, 25, 25]
+        pos_list = [(170, 70), (200, 120), (200, 155), (200, 190),
+                    (200, 225), (200, 260), (170, 320), (170, 365), (170, 410)]
+        ftsize_list = [30, 25, 25, 25, 25, 25, 35, 35, 35]
         text_list = [self.grade, self.hp, self.attack, self.defense, self.gold,
                      self.experience, self.yellow, self.blue, self.red]
 
         return pos_list, ftsize_list, text_list
 
-        disp.show_info(screen, (150, 60), self.grade, size=40)
-        disp.show_info(screen, (140, 120), self.hp, size=25)
-        disp.show_info(screen, (140, 155), self.attack, size=25)
-        disp.show_info(screen, (140, 190), self.defense, size=25)
-        disp.show_info(screen, (140, 225), self.gold, size=25)
-        disp.show_info(screen, (140, 260), self.experience, size=25)
-        disp.show_info(screen, (140, 320), self.yellow, size=25)
-        disp.show_info(screen, (140, 365), self.blue, size=25)
-        disp.show_info(screen, (140, 410), self.red, size=25)
+    def has_prop(self, prop_id):
+        return prop_id in self.prop_dict
+
+    def get_prop(self, prop_id):
+        self.prop_dict[prop_id] = 1
+
+    def strengthen(self, addition_type, addition):
+        if addition_type == "grade":
+            self.grade += addition
+            self.hp += addition * 800
+            self.attack += addition * 5
+            self.defense += addition * 5
+        elif addition_type == "hp":
+            self.hp += addition
+        elif addition_type == "attack":
+            self.attack += addition
+        elif addition_type == "defense":
+            self.defense += addition
+        elif addition_type == "yellow":
+            self.yellow += addition
+        elif addition_type == "blue":
+            self.blue += addition
+        elif addition_type == "red":
+            self.red += addition
+        elif addition_type == "gold":
+            self.gold += addition

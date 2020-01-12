@@ -16,13 +16,13 @@
 103=player/left
 104=player/right
 105=map0/dragonfly
-106=store/0
-107=store/1
-108=store/2
-109=map0/businessman
-110=map0/oldman
-111=map0/thief
-112=map0/princess
+106=map0/businessman
+107=map0/oldman
+108=map0/thief
+109=map0/princess
+110=map0/shop_left
+111=map0/shop_mid
+112=map0/shop_right
 
 201=map0/yellow_key
 202=map0/blue_key
