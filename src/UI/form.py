@@ -13,8 +13,12 @@ from conf.sysconf import *
 
 class Form():
     def __init__(self, **kwargs):
-        self.surface = kwargs.get("surface", None)
-        self.rect = self.surface.get_rect() if self.surface else None
+        if "surface" in kwargs:
+            self.surface = kwargs["surface"]
+        elif "size" in kwargs:
+            self.surface = pg.Surface(kwargs["size"])
+        else:
+            self.surface = None
         self.children = list()
         self.size = kwargs.get("size", (800, 600))
         self.left = kwargs.get("left", 0)
@@ -66,12 +70,12 @@ class Form():
                 surface, (p2[0]-p1[0], p2[1]-p1[1])), p1)
         elif mode == "repeat":
             w, h = surface.get_rect().size
-            left, top = p1
-            while top+h <= p2[0]:
-                while left+w <= p2[1]:
+            top = p1[1]
+            while top <= p2[1]:
+                left = p1[0]
+                while left <= p2[0]:
                     self.surface.blit(surface, (left, top))
                     left += w
-                left = p1[0]
                 top += h
         elif mode == "norepeat":
             self.surface.blit(surface, p1)
