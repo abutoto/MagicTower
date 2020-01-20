@@ -31,8 +31,8 @@ PLAY_DEFENSE = 10 # 防御力
 PLAY_GOLD = 0 # 钱
 PLAY_EXPERIENCE = 0 # 经验
 PLAY_YELLOW = 0 # 黄钥匙
-PLAY_BLUE = 1 # 蓝钥匙
-PLAY_RED = 1 # 红钥匙
+PLAY_BLUE = 0 # 蓝钥匙
+PLAY_RED = 0 # 红钥匙
 
 # 颜色
 WHILE = 255, 255, 255 # 白色

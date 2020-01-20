@@ -70,7 +70,9 @@ class Map(Form):
         self.max_floor = max(self.max_floor, self.floor)
         return pos
 
-    def change_cell(self, id, pos):
+    def change_cell(self, id, pos, floor=None):
         if pos[0] < 0 or pos[0] >= BLOCK_NUM or pos[1] < 0 or pos[1] >= BLOCK_NUM:
             return
-        self.map_dict[self.floor][pos[0]][pos[1]] = id
+        if floor == None:
+            floor = self.floor
+        self.map_dict[floor][pos[0]][pos[1]] = id

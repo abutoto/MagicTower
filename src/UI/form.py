@@ -91,5 +91,8 @@ class Form():
             rect.left = fill_rect[0] + width - rect.w
         else:
             rect.left = fill_rect[0]
-
+        
+        if width != 0 and rect.w > width:
+            return False
         self.fill_surface(surf, mode="norepeat", p1=rect)
+        return True

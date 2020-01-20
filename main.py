@@ -4,6 +4,7 @@ Created on 20191230
 '''
 
 import sys
+import time
 import pygame as pg
 import pygame.freetype as ft
 
@@ -12,18 +13,18 @@ from conf.sysconf import *
 from src.loader import read_image_dict, read_monster
 from src.UI.form import Form
 from src.UI.map import Map
+from src.UI.main_menu import MainMenu
 from src.player import Player
 from src.function import Function
 
 
 def init():
+    # 游戏初始化
     pg.display.set_caption(GAME_NAME)
 
     bg_img = pg.image.load(BG_IMAGE)
     bg_img = pg.transform.scale(bg_img, [WIDTH, HEIGHT])
-    bg_img = Form(surface=bg_img)
-    bg_img.create_rect((254, 44), (772, 562), FRAME_COLOR, 0)
-    root_screen.add_child(bg_img)
+    global_dict["bg_img"] = bg_img
 
     clock = pg.time.Clock()
     clock.tick(FPS)
@@ -41,6 +42,7 @@ def init():
     global_dict["image_group"] = IMAGE_GROUP
     global_dict["menu"] = None
 
+
 def run():
     while True:
         for event in pg.event.get():
@@ -48,24 +50,28 @@ def run():
                 sys.exit()
             elif event.type == pg.KEYDOWN:
                 function.action(event)
+                global_dict["move"] = True
+            elif event.type == pg.KEYUP:
+                global_dict["move"] = False
 
-        image_group_timer = global_dict["image_group_timer"] - 1
-        if image_group_timer == 0:
-            image_group_timer = IMAGE_GROUP_FPS
-            global_dict["image_group"] = global_dict["image_group"] ^ 1
-        global_dict["image_group_timer"] = image_group_timer
+        if global_dict["move"]:
+            key_pressed = pg.key.get_pressed()
+            active_keys = [pg.K_UP, pg.K_DOWN, pg.K_LEFT, pg.K_RIGHT, pg.K_SPACE]
+            for key in active_keys:
+                if key_pressed[key]:
+                    function.action(pg.event.Event(pg.KEYDOWN, dict(key=key)))
+            global_dict["move"] = False
 
-        function.update_screen()
         global_dict["rootscreen"].flush()
-        function.draw_statusbar()
         pg.display.update()
 
 
 if __name__ == '__main__':
     screen = pg.display.set_mode([WIDTH, HEIGHT])
-    root_screen = Form(surface=screen)
-    global_dict["rootscreen"] = root_screen
+    root_screen = MainMenu(surface=screen, priority=0)
     init()
+    global_dict["rootscreen"] = root_screen
+    global_dict["move"] = False
 
     function = Function()
     run()

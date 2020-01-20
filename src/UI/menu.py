@@ -10,7 +10,8 @@ import pygame as pg
 import pygame.freetype as ft
 
 from src.UI.form import Form
-from src.UI.dialogue_data import dialogue_info
+from src.UI.shop_data import shop_info
+from src.UI.dialogue_data import dialogue_info, npc_name
 from conf.sysconf import *
 from src.global_var import global_dict
 
@@ -55,16 +56,18 @@ class Menu(Form):
 
 
 class Shop(Menu):
-    def __init__(self, **kwargs):
-        kwargs["surface"] = pg.Surface((250, 250))
-        super().__init__(**kwargs)
+    def __init__(self, shop_id):
+        super().__init__()
+        self.size = (250, 250)
+        self.new(self.size)
         self.left = 350
         self.top = 150
         self.size = (250, 250)
         self.create_rect((0, 0), self.size, FRAME_COLOR, 5)
 
         self.select = 0
-        self.__dict__.update(kwargs)
+        self.__dict__.update(shop_info[shop_id])
+        self.shop_image = global_dict.get("image_dict")[0][shop_id//1000]
         self.goods_num = len(self.goods_addition)
         self.shop_image_rect = self.shop_image.get_rect()
         self.key_dict = {pg.K_UP: -1, pg.K_DOWN: 1,
@@ -285,113 +288,212 @@ class Jump_Menu(Menu):
                 left += width
 
 
-class Dialogue(Form):
-    def __init__(self, npc_id):
+class Dialogue(Menu):
+    def __init__(self, dialogue_id):
         super().__init__()
-        self.priority = 2
-        self.activate = False
-        self.map = None
-        self.player = None
+        self.size = (300, 90)
+        self.new(self.size)
 
-        self.npc_id = npc_id
-        self.npc_status = global_dict.get(npc_id, 0)
+        self.dialogue_id = dialogue_id
+        self.npc_status = global_dict.get(dialogue_id, 0)
         self.bg_image = global_dict.get("image_dict")[0][0]
-        self.image = global_dict.get("image_dict")[0][npc_id//1000]
+        self.image = global_dict.get("image_dict")[0][dialogue_id//1000]
         self.player_image = global_dict.get("image_dict")[0][102]
-        self.dialogue = dialogue_info[npc_id][self.npc_status]
-        self.dialogue_id = 0
-
-    def pull(self):
-        self.map = global_dict["map"]
-        self.player = global_dict["player"]
-
-    def push(self):
-        global_dict["map"] = self.map
-        global_dict["player"] = self.player
+        self.dialogue = dialogue_info[dialogue_id][self.npc_status]
+        self.npc_name = npc_name[dialogue_id//1000]
+        self.player_name = "勇士"
+        self.step = 0
 
     def action(self, event):
         self.pull()
 
         if event.key == pg.K_SPACE:
-            self.dialogue_id += 1
-            if self.dialogue_id >= len(self.dialogue):
+            self.dialogue[0][0] = self.dialogue[0][0][self.step:]
+            if len(self.dialogue[0][0]) == 0:
+                self.dialogue = self.dialogue[1:]
+                self.step = 0
+
+            if len(self.dialogue) == 0:
                 self.close()
-                if self.npc_id == 105000:  # 仙子
+                if self.dialogue_id == 105000:  # 仙子
                     if self.npc_status == 0:
                         self.player.yellow += 1
                         self.map.change_cell(0, (8, 5))
                         self.map.change_cell(105, (8, 4))  # 仙子左移
                         self.player.yellow = 1  # 黄钥匙+1
-                        self.npc_status += 1
+                        self.player.blue = 1  # 蓝钥匙+1
+                        self.player.red = 1  # 红钥匙+1
+                        self.npc_status = -1
                     # 拿到十字架
-                    elif self.npc_status == 1 and self.player.has_prop(220):
+                    elif self.npc_status == 2:
                         self.player.hp *= 2
                         self.player.attack *= 2
                         self.player.defense *= 2
-                        self.npc_status += 1
-                elif self.npc_id == 107002:  # 2层 神秘老人（得到钢剑，攻击+30）
+                        self.npc_status = -1
+                elif self.dialogue_id == 107002:  # 2层 神秘老人（得到钢剑，攻击+30）
                     if self.npc_status == 0:
                         self.player.attack += 30
-                        self.npc_status += 1
-                elif self.npc_id == 108002:  # 2层 商人（得到钢盾，防御+30）
+                        self.change_cell(0, (10, 7), 2)
+                        self.npc_status = -1
+                elif self.dialogue_id == 108002:  # 2层 商人（得到钢盾，防御+30）
                     if self.npc_status == 0:
                         self.player.defense += 30
-                        self.npc_status += 1
-                elif self.npc_id == 110004:  # 4层 小偷
-                    pass
-                elif self.npc_id == 107015:  # 15层 神秘老人 500金币（得到圣光剑，攻击+120）
-                    pass
-                elif self.npc_id == 108015:  # 15层 商人 500经验（得到圣光盾，防御+120）
-                    pass
-                elif self.npc_id == 313016:  # 16层 魔王
-                    pass
-                elif self.npc_id == 111018:  # 18层 公主
-                    pass
-                elif self.npc_id == 313016:  # 19层 冥灵魔王
-                    pass
-                elif self.npc_id == 313016:  # 21层 冥灵魔王
-                    pass
+                        self.change_cell(0, (10, 9), 2)
+                        self.npc_status = -1
+                elif self.dialogue_id == 110004:  # 4层 小偷
+                    if self.npc_status == 0:
+                        self.map.change_cell(0, (5, 1), floor=2)  # 打开第二层门
+                        self.npc_status = -1
+                    elif self.npc_status == 1:
+                        self.map.change_cell(0, (8, 5), floor=18)  # 打通18层
+                        self.map.change_cell(0, (9, 5), floor=18)
+                        self.map.change_cell(0, (0, 5), floor=4)
+                        self.npc_status = -1
+                elif self.dialogue_id == 107015:  # 15层 神秘老人 500金币（得到圣光剑，攻击+120）
+                    if self.npc_status == 0 and self.player.gold >= 500:
+                        self.player.gold -= 500
+                        self.player.attack += 120
+                        self.map.change_cell(0, (3, 4), floor=15)
+                        self.npc_status = -1
+                elif self.dialogue_id == 108015:  # 15层 商人 500经验（得到圣光盾，防御+120）
+                    if self.npc_status == 0 and self.player.experience >= 500:
+                        self.player.experience -= 500
+                        self.player.defense += 120
+                        self.map.change_cell(0, (3, 6), floor=15)
+                        self.npc_status = -1
+                elif self.dialogue_id == 313016:  # 16层 魔王
+                    self.npc_status = -1
+                elif self.dialogue_id == 111018:  # 18层 公主
+                    self.npc_status = -1
+                elif self.dialogue_id == 313016:  # 19层 冥灵魔王
+                    self.npc_status = -1
+                elif self.dialogue_id == 313016:  # 21层 冥灵魔王
+                    self.npc_status = -1
 
                 global_dict[self.npc_status] = self.npc_status
 
         self.draw()
 
-    def flush(self):
-        self.draw()
-        super().flush()
-
     def draw(self):
         self.pull()
-        if self.dialogue_id >= len(self.dialogue):
+        if len(self.dialogue) == 0:
+            self.close()
             return
-            
-        dialogue_list = self.dialogue[self.dialogue_id].split("\n")
-        self.size = (300, len(dialogue_list)*30+50)
-        self.new(self.size)
-        self.fill(BLACK)
 
-        self.fill_surface(self.bg_image, mode="repeat", p1=(0, 0), p2=self.size)
+        self.fill(BLACK)
+        self.fill_surface(self.bg_image, mode="repeat",
+                          p1=(0, 0), p2=self.size)
         self.create_rect((0, 0), self.size, FRAME_COLOR, 5)
-        if self.dialogue_id % 2 == 0:
+        name = self.npc_name
+        if self.dialogue[0][1] == 0:
             self.fill_surface(self.image, mode="norepeat", p1=(10, 12))
-            self.move((250, 300))
+            self.move((250, 250))
         else:
             self.fill_surface(self.player_image, mode="norepeat", p1=(10, 12))
-            self.move((400, 450))
+            self.move((450, 400))
+            name = self.player_name
 
-        hight = 30
-        top = 20
-        for t in dialogue_list:
-            self.fill_text(FONT_COLOR, t, size=16,
-                           mode="left", fill_rect=(60, top))
-            top += 20
+        hight = 25
+        width = 235
+        top = 10
+        self.fill_text(FONT_COLOR, name+":", size=16,
+                       mode="left", fill_rect=(60, top))
+        top += hight
+        index = 0
+        line_cnt = 0
+        while index < len(self.dialogue[0][0]):
+            step = 6*3
+            text = self.dialogue[0][0][index:index+step]
+            if "\n" in text:
+                step = text.index("\n")
+                text = text[:step]
+                step += len("\n")
+            while self.fill_text(FONT_COLOR, text, size=16, mode="left", fill_rect=(60, top), width=width) == False:
+                step -= 1
+                text = self.dialogue[0][0][index:index+step]
+            index += step
+            top += hight
+            line_cnt += 1
+            if line_cnt == 2:
+                break
 
-    def open(self):
-        global_dict["activate"] = self.priority
-        self.activate = True
+        self.step = index
 
-    def close(self):
-        global_dict["activate"] = 1
-        global_dict["menu"] = None
-        global_dict["rootscreen"].remove_child(self.priority)
-        self.activate = False
+
+class Fight(Menu):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.image = global_dict.get("image_dict")[0][0]
+        self.size = (740, 300)
+        self.left = 30
+        self.top = 40
+        self.new(self.size)
+
+        self.pull()
+        self.monster = kwargs["monster"]
+        self.monster_image = kwargs["monster_image"]
+        self.player_image = global_dict.get("image_dict")[0][102]
+        self.pos = kwargs["pos"]
+        self.time = 10
+        self.group_id = 0
+
+    def action(self, event):
+        pass
+
+    def draw(self):
+        self.fill(BLACK)
+        self.fill_surface(self.image, mode="repeat", p1=(0, 0), p2=self.size)
+        self.create_rect((0, 0), self.size, FRAME_COLOR, 10)
+
+        self.time -= 1
+        if self.time == 0:
+            self.time = 10
+            self.group_id = self.group_id ^ 1
+
+            self.monster["hp"] -= self.player.attack - self.monster["defense"]
+            self.monster["hp"] = max(self.monster["hp"], 0)
+            if self.monster["hp"] <= 0:
+                self.map.change_cell(0, self.pos)
+                self.push()
+                self.close()
+
+            self.player.hp -= self.monster["attack"] - self.player.defense
+
+        m_pos = (15, 50)
+        width = 130
+        left_inner = 35
+        width_inner = 60
+        p_pos = (self.size[0]-width-15, 50)
+        self.create_rect(
+            m_pos, (m_pos[0]+width, m_pos[1]+width), FRAME_COLOR, 3)
+        self.fill_surface(self.monster_image[self.group_id], mode="scale", p1=(
+            m_pos[0]+left_inner, m_pos[1]+left_inner), p2=(m_pos[0]+left_inner+width_inner, m_pos[1]+left_inner+width_inner))
+
+        self.create_rect(
+            p_pos, (p_pos[0]+width, p_pos[1]+width), FRAME_COLOR, 3)
+        self.fill_surface(self.player_image, mode="scale", p1=(
+            p_pos[0]+left_inner, p_pos[1]+left_inner), p2=(p_pos[0]+left_inner+width_inner, p_pos[1]+left_inner+width_inner))
+
+        text_list = ["生命值: {}".format(self.monster["hp"]),
+                     "攻击力: {}".format(self.monster["attack"]),
+                     "防御力: {}".format(self.monster["defense"]),
+                     "{} :生命值".format(self.player.hp),
+                     "{} :攻击力".format(self.player.attack),
+                     "{} :防御力".format(self.player.defense)]
+        width = 140
+        pos_list = [(m_pos[0]+width+10, 50), (m_pos[0]+width+10, 110), (m_pos[0]+width+10, 170),
+                    (p_pos[0]-width-10, 50), (p_pos[0]-width-10, 110), (p_pos[0]-width-10, 170)]
+        for i, text in enumerate(text_list):
+            self.fill_text(FONT_COLOR, text, size=25, mode="left" if i <
+                           3 else "right", fill_rect=pos_list[i], width=width)
+            left = pos_list[i][0]
+            height = pos_list[i][1] + 30
+            self.create_rect(
+                (left, height), (left+width, height), FONT_COLOR, 1)
+
+        self.fill_text(FONT_COLOR, "怪物", size=40, mode="center",
+                       fill_rect=(m_pos[0], 200), width=width)
+        self.fill_text(FONT_COLOR, "勇士", size=40, mode="center",
+                       fill_rect=(p_pos[0], 200), width=width)
+        self.fill_text(FONT_COLOR, "VS", size=70, mode="center", fill_rect=(
+            (self.size[0]-width)/2, (self.size[1]-width)/2), width=width)

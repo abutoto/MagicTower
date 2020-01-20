@@ -27,47 +27,6 @@ class Function():
         global_dict["map"] = self.map
         global_dict["player"] = self.player
 
-    def update_screen(self):
-        self.pull()
-        if global_dict["menu"] and global_dict["menu"].activate == False:
-            global_dict["menu"].open()
-            global_dict["rootscreen"].add_child(global_dict["menu"])
-
-        image_group = global_dict.get("image_group")
-        image_dict = global_dict.get("image_dict")[image_group]
-        global_dict["map"].draw_map(image_dict)
-
-        global_dict["map"].map_dict[global_dict["map"].floor][self.player.x][self.player.y] = 0
-        rect = image_dict[self.player.face + 101].get_rect()
-        rect.left = self.player.y * BLOCK_SIZE
-        rect.top = self.player.x*BLOCK_SIZE
-        global_dict["map"].fill_surface(image_dict[self.player.face+101],
-                                        mode="norepeat", p1=(self.player.y * BLOCK_SIZE, self.player.x*BLOCK_SIZE))
-
-    def draw_statusbar(self):
-        self.pull()
-        ft.init()
-        font = ft.Font(FONT_NAME, size=50)
-        pos_list, ftsize_list, text_list = self.player.get_status()
-        for i in range(len(pos_list)):
-            global_dict["rootscreen"].fill_text(
-                FONT_COLOR, text_list[i], size=ftsize_list[i], mode="right", fill_rect=pos_list[i])
-
-        floor_info = "第 {} 层".format(self.map.floor) if self.map.floor > 0 else "序 章"
-        global_dict["rootscreen"].fill_text(
-            FONT_COLOR, floor_info, size=25, mode="center", fill_rect=(90, 465), width=80)
-
-        global_dict["rootscreen"].fill_text(
-            FONT_COLOR, "S 保存", size=16, mode="center", fill_rect=(45, 525), width=70)
-        global_dict["rootscreen"].fill_text(
-            FONT_COLOR, "Q 退出程序", size=16, mode="center", fill_rect=(130, 525), width=80)
-        global_dict["rootscreen"].fill_text(
-            FONT_COLOR, "A 读取", size=16, mode="center", fill_rect=(45, 555), width=70)
-        global_dict["rootscreen"].fill_text(
-            FONT_COLOR, "R 重新开始", size=16, mode="center", fill_rect=(130, 555), width=80)
-
-        self.push()
-
     def action(self, event):
         self.pull()
         menu = global_dict["menu"]
@@ -91,11 +50,11 @@ class Function():
         elif event.key == pg.K_RIGHT:
             self.move(3)
         elif event.key == pg.K_l:
-            if self.player.has_prop(215) == False:
+            if self.player.has_prop(215) == True:
                 monster_info = Monster_Info()
                 global_dict["menu"] = monster_info
         elif event.key == pg.K_j:
-            if self.player.has_prop(214) == False:
+            if self.player.has_prop(214) == True:
                 jump_menu = Jump_Menu()
                 global_dict["menu"] = jump_menu
 
@@ -129,10 +88,13 @@ class Function():
             self.map.change_cell(0, pos)
             status = True
         elif move_id >= 300:  # 怪物
-            status = self.player.try_fight(
-                global_dict["monster_dict"][move_id-300])
-            if status:
-                self.map.change_cell(0, pos)
+            monster = global_dict["monster_dict"][move_id-300].copy()
+            monster_image = [global_dict["image_dict"][0]
+                             [move_id], global_dict["image_dict"][1][move_id]]
+            if self.player.can_win(monster):
+                global_dict["menu"] = Fight(
+                    monster=monster, pos=pos, monster_image=monster_image)
+                self.monster_action(move_id)
 
     def check_door(self, move_id):
         status = False
@@ -166,81 +128,114 @@ class Function():
         return status
 
     def get_prop(self, prop_id):
+        message = ""
         if prop_id == 201:  # 黄钥匙
-            self.player.yellow += 1
+            self.player.strengthen("yellow", 1)
+            message = "获得黄钥匙，黄钥匙 +1"
         elif prop_id == 202:  # 蓝钥匙
-            self.player.blue += 1
+            self.player.strengthen("blue", 1)
+            message = "获得蓝钥匙，蓝钥匙 +1"
         elif prop_id == 203:  # 红钥匙
-            self.player.red += 1
+            self.player.strengthen("red", 1)
+            message = "获得红钥匙，红钥匙 +1"
         elif prop_id == 204:  # 红血瓶
-            self.player.hp += 200
+            self.player.strengthen("hp", 200)
+            message = "获取红血瓶，血量 +200"
         elif prop_id == 205:  # 蓝血瓶
-            self.player.hp += 500
+            self.player.strengthen("hp", 500)
+            message = "获得蓝血瓶，血量 +500"
         elif prop_id == 206:  # 蓝宝石
-            self.player.defense += 2
+            self.player.strengthen("defense", 2)
+            message = "获得蓝宝石，防御力 +2"
         elif prop_id == 207:  # 红宝石
-            self.player.attack += 3
+            self.player.strengthen("attack", 3)
+            message = "获得红宝石，攻击力 +3"
         elif prop_id == 208:  # 铁剑
-            self.player.attack += 10
+            self.player.strengthen("attack", 10)
+            message = "获得铁剑，攻击力 +10"
         elif prop_id == 209:  # 钢剑
-            self.player.attack += 30
+            self.player.strengthen("attack", 30)
+            message = "获得钢剑，攻击力 +30"
         elif prop_id == 210:  # 圣光剑
-            self.player.attack += 120
+            self.player.strengthen("attack", 120)
+            message = "获得圣光剑，攻击力 +120"
         elif prop_id == 211:  # 铁盾
-            self.player.defense += 10
+            self.player.strengthen("defense", 10)
+            message = "获得铁盾，防御力 +10"
         elif prop_id == 212:  # 钢盾
-            self.player.defense += 30
+            self.player.strengthen("defense", 30)
+            message = "获得钢盾，防御力 +30"
         elif prop_id == 213:  # 星光盾
-            self.player.defense += 120
+            self.player.strengthen("defense", 120)
+            message = "获得星光盾，防御力 +120"
         elif prop_id == 214:  # 楼层跳跃
-            pass
+            message = "获得风之，按 L 实现楼层跳跃"
         elif prop_id == 215:  # 罗盘
-            pass
+            message = "获得罗盘，按 J 查看怪物属性"
         elif prop_id == 216:  # 星光神榔
-            pass
+            message = "获得星光神榔"
+            global_dict[107004] = 1
         elif prop_id == 217:  # 小飞羽
-            self.player.grade += 1
-            self.player.hp += 1000
-            self.player.attack += 7
-            self.player.defense += 7
+            self.player.strengthen( "grade", 1)
+            message = "获得小飞羽，升一级"
         elif prop_id == 218:  # 大飞羽
-            self.player.grade += 3
-            self.player.hp += 3000
-            self.player.attack += 21
-            self.player.defense += 21
+            self.player.strengthen("grade", 3)
+            message = "获得大飞羽，升三级"
         elif prop_id == 219:  # 钥匙盒
-            self.player.yellow += 1
-            self.player.blue += 1
-            self.player.red += 1
+            self.player.strengthen("yellow", 1)
+            self.player.strengthen("blue", 1)
+            self.player.strengthen("red", 1)
+            message = "获得钥匙盒，各钥匙数 +1"
         elif prop_id == 220:  # 十字架
-            pass
+            global_dict[105000] = 1
+            message = "获得十字架"
         elif prop_id == 221:  # 金币
-            self.player.gold += 300
+            self.player.strengthen("gold", 300)
+            message = "获得大金币，金币 +300"
         elif prop_id == 222:  # 圣水瓶
-            self.player.hp *= 2
+            self.player.strengthen("hp", self.player.hp)
+            message = "获得圣水瓶，血量翻倍"
         elif prop_id == 223:  # 炎之灵杖
-            pass
+            message = "获得炎之灵杖"
         elif prop_id == 224:  # 心之灵杖
-            pass
+            message = "获得心之灵杖"
 
         self.player.get_prop(prop_id)
+        global_dict.get("message", []).append([message, 15])
 
     def meet(self, npc_id):
         def is_shop():
-            if npc_id >= 110 and npc_id <= 112:  # 商店
+            if npc_id == 111:  # 商店
                 return True
-            elif npc_id == 107 and self.map.floor in (5, 13): # 经验商店
+            elif npc_id == 107 and self.map.floor in (5, 13):  # 经验商店
                 return True
-            elif npc_id == 108 and self.map.floor in (5, 18): # 钥匙商店
+            elif npc_id == 108 and self.map.floor in (5, 18):  # 钥匙商店
                 return True
             return False
 
+        if npc_id >= 110 and npc_id <= 112:
+            npc_id = 111
         npc_dialoague = npc_id * 1000 + self.map.floor
 
         if is_shop():
             mune = Shop(npc_dialoague)
         else:
-            mune = Dialogue(npc_dialoague)
+            if global_dict.get(npc_dialoague, 0) != -1:
+                mune = Dialogue(npc_dialoague)
+            else:
+                mune = None
 
         global_dict["menu"] = mune
-        
+
+    def monster_action(self, monster_id):
+        if monster_id == 313: # 红衣魔王
+            if self.map.floor == 16: # 16层
+                pass
+        elif monster_id == 310: # 白衣武士
+            if self.map.floor == 7:
+                pass
+        elif monster_id == 319: # 冥灵魔王
+            if self.map.floor == 19: # 19 层
+                pass
+            elif self.map.floor == 21: # 21 层
+                pass

@@ -33,7 +33,7 @@ class Player():
 
     def try_fight(self, monster):
         heart = self.get_heart(monster)
-        if heart == "???":
+        if heart == "???" and heart >= self.hp:
             return False
         self.hp -= heart
         self.experience += monster["experience"]
@@ -46,15 +46,17 @@ class Player():
         if h1 <= 0:
             return "???"
         round = math.ceil((monster["hp"] - h1) / h1)
+        return round * h2
 
-        if round * h2 >= self.hp:
-            return "???"
-        else:
-            return round * h2
+    def can_win(self, monster):
+        heart = self.get_heart(monster)
+        if heart == "???" and heart >= self.hp:
+            return False
+        return True
 
     def get_status(self):
-        pos_list = [(170, 70), (200, 120), (200, 155), (200, 190),
-                    (200, 225), (200, 260), (170, 320), (170, 365), (170, 410)]
+        pos_list = [(120, 70), (120, 120), (120, 155), (120, 190),
+                    (120, 225), (120, 260), (120, 320), (120, 365), (120, 410)]
         ftsize_list = [30, 25, 25, 25, 25, 25, 35, 35, 35]
         text_list = [self.grade, self.hp, self.attack, self.defense, self.gold,
                      self.experience, self.yellow, self.blue, self.red]
